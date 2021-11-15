@@ -1,0 +1,26 @@
+using System.IO;
+using NetRpc.Messages;
+
+namespace NetRpc.Demo
+{
+  public class LoginResponse : IdMessage
+  {
+    public bool successfull { get; set; }
+
+    public override int Type()
+    {
+      return (int)MessageType.LOGIN_RESPONSE;
+    }
+    public override byte[] Encode()
+    {
+      return Encode(new byte[] { successfull ? (byte)0x1 : (byte)0x0 });
+    }
+
+    public override void Decode(byte[] data)
+    {
+      var memstream = new BinaryReader(new MemoryStream(data));
+      Decode(memstream);
+      this.successfull = memstream.ReadByte() == 1;
+    }
+  }
+}

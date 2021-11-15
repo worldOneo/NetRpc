@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\NetRpc.Common\NetRpc.Common.csproj" />
+    <ProjectReference Include="..\NetRpc.Messages\NetRpc.Messages.csproj" />
+    <ProjectReference Include="..\NetRpc.Server\NetRpc.Server.csproj" />
+    <ProjectReference Include="..\NetRpc.Client\NetRpc.Client.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+</Project>
