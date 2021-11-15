@@ -8,8 +8,10 @@ namespace NetRpc.Demo
   {
     static void Main(string[] args)
     {
+      var server = new RemoteServer();
       test();
       Console.ReadLine();
+      server.Stop();
     }
 
     async static void test()
@@ -21,13 +23,13 @@ namespace NetRpc.Demo
       Console.Write("Password: ");
       var argument = new Login()
       {
-        username = "juun",
+        username = "user",
         password = Console.ReadLine()
       };
 
       LoginResponse success = (LoginResponse)await client.SendMessage(argument);
 
-      Console.WriteLine(success.successfull ? "Logged in" : "Loggin failed");
+      Console.WriteLine("[Client] " + (success.successfull ? "Logged in" : "Loggin failed"));
     }
   }
 }
