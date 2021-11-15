@@ -11,6 +11,9 @@ namespace NetRpc.Server
   {
     private TcpListener tcpListener;
     private FrameHandler handler;
+    private bool Running;
+
+    public Action<IOException> ErrorHandler { get; set; }
     public int MaxMessageLength { get; set; } = 1_000_000;
     public RpcServer(IPAddress address, int port, FrameHandler handler)
     {
@@ -21,12 +24,19 @@ namespace NetRpc.Server
     public void Start()
     {
       tcpListener.Start();
+      Running = true;
       listenForConnection();
+    }
+
+    public void Stop()
+    {
+      Running = false;
+      tcpListener.Stop();
     }
 
     public void listenForConnection()
     {
-      tcpListener.BeginAcceptTcpClient(handleConnection, tcpListener);
+      tcpListener.BeginAcceptTcpClient(handleConnection, null);
     }
     void handleConnection(IAsyncResult result)
     {
@@ -37,9 +47,10 @@ namespace NetRpc.Server
         {
           readMessage(client);
         }
-        catch (IOException)
+        catch (IOException exception)
         {
-          Console.WriteLine("Client disconnected.");
+          if (ErrorHandler != null)
+            ErrorHandler(exception);
         }
       }
     }
