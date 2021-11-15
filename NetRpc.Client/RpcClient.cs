@@ -14,7 +14,6 @@ namespace NetRpc.Client
     private Dictionary<int, Func<Message>> messageFactories = new Dictionary<int, Func<Message>>();
     private Dictionary<Guid, TaskCompletionSource<Message>> pendingTasks = new Dictionary<Guid, TaskCompletionSource<Message>>();
 
-
     public RpcClient(IPAddress address, int port)
     {
       client = new TcpClient();
@@ -47,6 +46,7 @@ namespace NetRpc.Client
         if (!pendingTasks.ContainsKey(msg.GetGuid()))
           continue;
         var stage = pendingTasks[msg.GetGuid()];
+        pendingTasks.Remove(msg.GetGuid());
         stage.TrySetResult(msg);
       }
     }
