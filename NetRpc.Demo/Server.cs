@@ -20,7 +20,7 @@ namespace NetRpc.Demo
 
     public void Stop() => server.Stop();
 
-    public LoginResponse LoginUser(Context context, Login login)
+    public LoginResponse LoginUser(IContext context, Login login)
     {
       Console.WriteLine("[Server] Loggin attempt: " + login.username + "@" + login.password);
       return new LoginResponse()

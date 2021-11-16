@@ -5,7 +5,7 @@ namespace NetRpc.Demo
 {
   public class LoginResponse : IdMessage
   {
-    public bool successfull { get; set; }
+    public bool Successful { get; set; }
 
     public override int Type()
     {
@@ -13,14 +13,14 @@ namespace NetRpc.Demo
     }
     public override byte[] Encode()
     {
-      return Encode(new byte[] { successfull ? (byte)0x1 : (byte)0x0 });
+      return Encode(new byte[] { Successful ? (byte)0x1 : (byte)0x0 });
     }
 
     public override void Decode(byte[] data)
     {
       var memstream = new BinaryReader(new MemoryStream(data));
       Decode(memstream);
-      this.successfull = memstream.ReadByte() == 1;
+      this.Successful = memstream.ReadByte() == 1;
     }
   }
 }

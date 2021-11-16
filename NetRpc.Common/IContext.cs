@@ -2,9 +2,9 @@ using System.Net.Sockets;
 
 namespace NetRpc.Common
 {
-  public interface Context
+  public interface IContext
   {
     TcpClient Client();
-    void Respond(Message msg);
+    void Respond(IMessage msg);
   }
 }

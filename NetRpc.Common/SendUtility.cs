@@ -10,20 +10,20 @@ namespace NetRpc.Common
 
     internal class MessageWriter
     {
-      private Stream stream;
+      private Stream _stream;
       public MessageWriter(Stream stream)
       {
-        this.stream = stream;
+        this._stream = stream;
       }
 
-      public async Task write(Message message)
+      public async Task write(IMessage message)
       {
         var data = message.Encode();
         var size = data.Length;
         var type = message.Type();
-        await AsyncWriteBuff(stream, BitConverter.GetBytes(size));
-        await AsyncWriteBuff(stream, BitConverter.GetBytes(type));
-        await AsyncWriteBuff(stream, data);
+        await AsyncWriteBuff(_stream, BitConverter.GetBytes(size));
+        await AsyncWriteBuff(_stream, BitConverter.GetBytes(type));
+        await AsyncWriteBuff(_stream, data);
       }
     }
 
@@ -31,32 +31,32 @@ namespace NetRpc.Common
     {
       public const int SIZE_FIELD_SIZE = 4;
       public const int TYPE_FIELD_SIZE = 4;
-      private byte[] msg;
-      private byte[] size = new byte[SIZE_FIELD_SIZE];
-      private byte[] type = new byte[TYPE_FIELD_SIZE];
-      private Stream stream;
-      private uint max = 0;
+      private byte[] _msg;
+      private byte[] _size = new byte[SIZE_FIELD_SIZE];
+      private byte[] _type = new byte[TYPE_FIELD_SIZE];
+      private Stream _stream;
+      private uint _max = 0;
       public MessageReader(Stream stream, uint max)
       {
-        this.stream = stream;
-        this.max = max;
+        this._stream = stream;
+        this._max = max;
       }
 
       public async Task<RawMessage> read()
       {
-        await AsyncReadBuff(stream, this.size);
-        uint msgSize = BitConverter.ToUInt32(size);
-        if (msgSize > max)
+        await AsyncReadBuff(_stream, this._size);
+        uint msgSize = BitConverter.ToUInt32(_size);
+        if (msgSize > _max)
         {
           return null;
         }
-        msg = new byte[msgSize];
-        await AsyncReadBuff(stream, this.type);
-        await AsyncReadBuff(stream, this.msg);
+        _msg = new byte[msgSize];
+        await AsyncReadBuff(_stream, this._type);
+        await AsyncReadBuff(_stream, this._msg);
         return new RawMessage()
         {
-          buff = msg,
-          type = BitConverter.ToInt32(type)
+          buff = _msg,
+          type = BitConverter.ToInt32(_type)
         };
       }
     }
@@ -76,7 +76,7 @@ namespace NetRpc.Common
       return read;
     }
 
-    public static Task SendMessage(Stream stream, Message message)
+    public static Task SendMessage(Stream stream, IMessage message)
     {
       return new MessageWriter(stream).write(message);
     }

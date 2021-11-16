@@ -10,42 +10,42 @@ namespace NetRpc.Client
 {
   public class RpcClient
   {
-    private TcpClient client;
-    private Dictionary<int, Func<Message>> messageFactories = new Dictionary<int, Func<Message>>();
-    private Dictionary<Guid, TaskCompletionSource<Message>> pendingTasks = new Dictionary<Guid, TaskCompletionSource<Message>>();
+    private TcpClient _client;
+    private Dictionary<int, Func<IMessage>> _messageFactories = new Dictionary<int, Func<IMessage>>();
+    private Dictionary<Guid, TaskCompletionSource<IMessage>> _pendingTasks = new Dictionary<Guid, TaskCompletionSource<IMessage>>();
 
     public RpcClient(IPAddress address, int port)
     {
-      client = new TcpClient();
-      client.Connect(address, port);
+      _client = new TcpClient();
+      _client.Connect(address, port);
       ThreadPool.QueueUserWorkItem(o => Receive());
     }
 
-    public void RegisterMessageFactory(int type, Func<Message> factory)
+    public void RegisterMessageFactory(int type, Func<IMessage> factory)
     {
-      messageFactories[type] = factory;
+      _messageFactories[type] = factory;
     }
 
-    public Task<Message> SendMessage(Message message)
+    public Task<IMessage> SendMessage(IMessage message)
     {
-      TaskCompletionSource<Message> task = new TaskCompletionSource<Message>();
-      pendingTasks[message.GetGuid()] = task;
-      SendUtility.SendMessage(client.GetStream(), message);
-      return (Task<Message>)task.Task;
+      TaskCompletionSource<IMessage> task = new TaskCompletionSource<IMessage>();
+      _pendingTasks[message.GetGuid()] = task;
+      SendUtility.SendMessage(_client.GetStream(), message);
+      return (Task<IMessage>)task.Task;
     }
     private async void Receive()
     {
       while (true)
       {
-        var rawMsg = await SendUtility.ReadFrame(client.GetStream(), 1_000_000);
-        if (!messageFactories.ContainsKey(rawMsg.type))
+        var rawMsg = await SendUtility.ReadFrame(_client.GetStream(), 1_000_000);
+        if (!_messageFactories.ContainsKey(rawMsg.type))
           continue;
-        var msg = messageFactories[rawMsg.type]();
+        var msg = _messageFactories[rawMsg.type]();
         msg.Decode(rawMsg.buff);
-        if (!pendingTasks.ContainsKey(msg.GetGuid()))
+        if (!_pendingTasks.ContainsKey(msg.GetGuid()))
           continue;
-        var stage = pendingTasks[msg.GetGuid()];
-        pendingTasks.Remove(msg.GetGuid());
+        var stage = _pendingTasks[msg.GetGuid()];
+        _pendingTasks.Remove(msg.GetGuid());
         stage.TrySetResult(msg);
       }
     }

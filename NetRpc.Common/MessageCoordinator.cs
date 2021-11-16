@@ -2,20 +2,20 @@ using System.Collections.Generic;
 
 namespace NetRpc.Common
 {
-  public class MessageCoordinator : FrameHandler
+  public class MessageCoordinator : IFrameHandler
   {
-    private Dictionary<int, FrameHandler> typedHandlers = new Dictionary<int, FrameHandler>();
+    private Dictionary<int, IFrameHandler> _typedHandlers = new Dictionary<int, IFrameHandler>();
 
-    public void Receive(Context ctx, int type, byte[] data)
+    public void Receive(IContext ctx, int type, byte[] data)
     {
-      if (typedHandlers[type] == null)
+      if (_typedHandlers[type] == null)
         return;
-      typedHandlers[type].Receive(ctx, type, data);
+      _typedHandlers[type].Receive(ctx, type, data);
     }
 
-    public void Register(int type, FrameHandler handler)
+    public void Register(int type, IFrameHandler handler)
     {
-      typedHandlers[type] = handler;
+      _typedHandlers[type] = handler;
     }
   }
 }

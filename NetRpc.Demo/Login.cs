@@ -5,8 +5,8 @@ namespace NetRpc.Demo
 {
   public class Login : IdMessage
   {
-    public string username { get; set; }
-    public string password { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
 
     public override int Type()
     {
@@ -17,8 +17,8 @@ namespace NetRpc.Demo
     {
       var stream = new MemoryStream();
       var writer = new BinaryWriter(stream);
-      writer.Write(username);
-      writer.Write(password);
+      writer.Write(Username);
+      writer.Write(Password);
       return Encode(stream.ToArray());
     }
 
@@ -26,8 +26,8 @@ namespace NetRpc.Demo
     {
       var stream = new BinaryReader(new MemoryStream(data));
       Decode(stream);
-      username = stream.ReadString();
-      password = stream.ReadString();
+      Username = stream.ReadString();
+      Password = stream.ReadString();
     }
   }
 }

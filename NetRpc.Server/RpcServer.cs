@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Diagnostics;
 using NetRpc.Common;
 using System.IO;
 using System;
@@ -12,32 +11,29 @@ namespace NetRpc.Server
   public class RpcServer
   {
     private TcpListener tcpListener;
-    private FrameHandler handler;
-    private bool Running;
-    private ManualResetEvent acceptConnection = new ManualResetEvent(false);
+    private IFrameHandler _handler;
+    private ManualResetEvent _acceptConnection = new ManualResetEvent(false);
 
     public Action<IOException> ErrorHandler { get; set; }
     public uint MaxMessageLength { get; set; } = 1_000_000;
-    public RpcServer(IPAddress address, int port, FrameHandler handler)
+    public RpcServer(IPAddress address, int port, IFrameHandler handler)
     {
       tcpListener = new TcpListener(address, port);
-      this.handler = handler;
+      this._handler = handler;
     }
 
     public Task Start()
     {
       tcpListener.Start();
-      Running = true;
       return listenForConnection();
     }
 
     public void Stop()
     {
-      Running = false;
       tcpListener.Stop();
     }
 
-    public async Task listenForConnection()
+    private async Task listenForConnection()
     {
       while (true)
       {
@@ -45,7 +41,7 @@ namespace NetRpc.Server
         Task.Run(() => handleConnection(client));
       }
     }
-    async Task handleConnection(TcpClient client)
+    private async Task handleConnection(TcpClient client)
     {
       using (client)
       {
@@ -61,7 +57,7 @@ namespace NetRpc.Server
       }
     }
 
-    private void sendMessage(TcpClient client, Message message)
+    private void sendMessage(TcpClient client, IMessage message)
       => SendUtility.SendMessage(client.GetStream(), message);
 
     private async Task readMessage(TcpClient client)
@@ -69,7 +65,7 @@ namespace NetRpc.Server
       while (true)
       {
         var message = await SendUtility.ReadFrame(client.GetStream(), MaxMessageLength);
-        this.handler.Receive(new DefaultContext()
+        this._handler.Receive(new DefaultContext()
         {
           client = client,
           respond = msg => sendMessage(client, msg)

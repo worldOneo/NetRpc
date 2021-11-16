@@ -2,7 +2,7 @@
 
 namespace NetRpc.Common
 {
-  public interface Message
+  public interface IMessage
   {
     Guid GetGuid();
     void SetGuid(Guid id);
