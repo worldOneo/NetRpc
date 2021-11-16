@@ -18,7 +18,7 @@ namespace NetRpc.Client
     {
       client = new TcpClient();
       client.Connect(address, port);
-      new Thread(Receive).Start();
+      ThreadPool.QueueUserWorkItem(o => Receive());
     }
 
     public void RegisterMessageFactory(int type, Func<Message> factory)
@@ -33,16 +33,15 @@ namespace NetRpc.Client
       SendUtility.SendMessage(client.GetStream(), message);
       return (Task<Message>)task.Task;
     }
-    private void Receive()
+    private async void Receive()
     {
       while (true)
       {
-        int type;
-        var buff = SendUtility.ReadFrame(client.GetStream(), out type);
-        if (!messageFactories.ContainsKey(type))
+        var rawMsg = await SendUtility.ReadFrame(client.GetStream(), 1_000_000);
+        if (!messageFactories.ContainsKey(rawMsg.type))
           continue;
-        var msg = messageFactories[type]();
-        msg.Decode(buff);
+        var msg = messageFactories[rawMsg.type]();
+        msg.Decode(rawMsg.buff);
         if (!pendingTasks.ContainsKey(msg.GetGuid()))
           continue;
         var stage = pendingTasks[msg.GetGuid()];

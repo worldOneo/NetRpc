@@ -4,6 +4,8 @@ using System.Diagnostics;
 using NetRpc.Common;
 using System.IO;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NetRpc.Server
 {
@@ -12,20 +14,21 @@ namespace NetRpc.Server
     private TcpListener tcpListener;
     private FrameHandler handler;
     private bool Running;
+    private ManualResetEvent acceptConnection = new ManualResetEvent(false);
 
     public Action<IOException> ErrorHandler { get; set; }
-    public int MaxMessageLength { get; set; } = 1_000_000;
+    public uint MaxMessageLength { get; set; } = 1_000_000;
     public RpcServer(IPAddress address, int port, FrameHandler handler)
     {
       tcpListener = new TcpListener(address, port);
       this.handler = handler;
     }
 
-    public void Start()
+    public Task Start()
     {
       tcpListener.Start();
       Running = true;
-      listenForConnection();
+      return listenForConnection();
     }
 
     public void Stop()
@@ -34,18 +37,21 @@ namespace NetRpc.Server
       tcpListener.Stop();
     }
 
-    public void listenForConnection()
+    public async Task listenForConnection()
     {
-      tcpListener.BeginAcceptTcpClient(handleConnection, null);
+      while (true)
+      {
+        var client = await tcpListener.AcceptTcpClientAsync();
+        Task.Run(() => handleConnection(client));
+      }
     }
-    void handleConnection(IAsyncResult result)
+    async Task handleConnection(TcpClient client)
     {
-      listenForConnection();
-      using (TcpClient client = tcpListener.EndAcceptTcpClient(result))
+      using (client)
       {
         try
         {
-          readMessage(client);
+          await readMessage(client);
         }
         catch (IOException exception)
         {
@@ -58,17 +64,16 @@ namespace NetRpc.Server
     private void sendMessage(TcpClient client, Message message)
       => SendUtility.SendMessage(client.GetStream(), message);
 
-    private void readMessage(TcpClient client)
+    private async Task readMessage(TcpClient client)
     {
       while (true)
       {
-        int type;
-        var buff = SendUtility.ReadFrame(client.GetStream(), out type, MaxMessageLength);
+        var message = await SendUtility.ReadFrame(client.GetStream(), MaxMessageLength);
         this.handler.Receive(new DefaultContext()
         {
           client = client,
           respond = msg => sendMessage(client, msg)
-        }, type, buff);
+        }, message.type, message.buff);
       }
     }
   }
