@@ -27,13 +27,13 @@ namespace NetRpc.Demo
       Console.Write("Password: ");
       var argument = new Login()
       {
-        username = "user",
-        password = Console.ReadLine()
+        Username = "user",
+        Password = Console.ReadLine()
       };
 
       LoginResponse success = (LoginResponse)await client.SendMessage(argument);
 
-      Console.WriteLine("[Client] " + (success.successfull ? "Logged in" : "Loggin failed"));
+      Console.WriteLine("[Client] " + (success.Successful ? "Logged in" : "Loggin failed"));
     }
   }
 }
