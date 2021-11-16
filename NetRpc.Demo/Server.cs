@@ -15,7 +15,7 @@ namespace NetRpc.Demo
       handler.Register((int)MessageType.LOGIN, login);
       server = new RpcServer(IPAddress.Loopback, 9000, handler);
       server.ErrorHandler = err => Console.WriteLine("[Server] Error: " + err.StackTrace);
-      server.Start();
+      server.Start().Wait();
     }
 
     public void Stop() => server.Stop();

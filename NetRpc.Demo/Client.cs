@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using NetRpc.Client;
+using System.Threading;
 
 namespace NetRpc.Demo
 {
@@ -8,10 +9,13 @@ namespace NetRpc.Demo
   {
     static void Main(string[] args)
     {
-      var server = new RemoteServer();
+      ThreadPool.QueueUserWorkItem(b =>
+      {
+        new RemoteServer();
+        Console.WriteLine("Server thread goes bye bye");
+      });
       test();
       Console.ReadLine();
-      server.Stop();
     }
 
     async static void test()
