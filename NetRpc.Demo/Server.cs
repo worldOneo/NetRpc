@@ -22,10 +22,10 @@ namespace NetRpc.Demo
 
     public LoginResponse LoginUser(IContext context, Login login)
     {
-      Console.WriteLine("[Server] Loggin attempt: " + login.username + "@" + login.password);
+      Console.WriteLine("[Server] Loggin attempt: " + login.Username + "@" + login.Password);
       return new LoginResponse()
       {
-        successfull = login.username == "user" && login.password == "password"
+        Successful = login.Username == "user" && login.Password == "password"
       };
     }
   }
