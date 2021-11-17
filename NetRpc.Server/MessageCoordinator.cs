@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using NetRpc.Common;
 
-namespace NetRpc.Common
+namespace NetRpc.Server
 {
   public class MessageCoordinator : IFrameHandler
   {
@@ -11,6 +12,7 @@ namespace NetRpc.Common
       if (_typedHandlers[type] == null)
         return;
       _typedHandlers[type].Receive(ctx, type, data);
+      return;
     }
 
     public void Register(int type, IFrameHandler handler)

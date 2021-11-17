@@ -8,45 +8,35 @@ using System;
 
 namespace NetRpc.Client
 {
-  public class RpcClient
+  public class RpcClient<T>
   {
+    public uint MaxMessageLength { get; set; } = 1_000_000;
     private TcpClient _client;
-    private Dictionary<int, Func<IMessage>> _messageFactories = new Dictionary<int, Func<IMessage>>();
-    private Dictionary<Guid, TaskCompletionSource<IMessage>> _pendingTasks = new Dictionary<Guid, TaskCompletionSource<IMessage>>();
-
-    public RpcClient(IPAddress address, int port)
+    private IFrameHandler _handler;
+    private ISender<T> _sender;
+    public RpcClient(IPAddress address, int port, IFrameHandler handler, ISender<T> sender)
     {
       _client = new TcpClient();
       _client.Connect(address, port);
+      _handler = handler;
+      _sender = sender;
       ThreadPool.QueueUserWorkItem(o => Receive());
     }
 
-    public void RegisterMessageFactory(int type, Func<IMessage> factory)
+    public T SendMessage(IMessage message)
     {
-      _messageFactories[type] = factory;
-    }
-
-    public Task<IMessage> SendMessage(IMessage message)
-    {
-      TaskCompletionSource<IMessage> task = new TaskCompletionSource<IMessage>();
-      _pendingTasks[message.GetGuid()] = task;
-      SendUtility.SendMessage(_client.GetStream(), message);
-      return (Task<IMessage>)task.Task;
+      return _sender.Send(_client, message);
     }
     private async void Receive()
     {
       while (true)
       {
-        var rawMsg = await SendUtility.ReadFrame(_client.GetStream(), 1_000_000);
-        if (!_messageFactories.ContainsKey(rawMsg.type))
-          continue;
-        var msg = _messageFactories[rawMsg.type]();
-        msg.Decode(rawMsg.buff);
-        if (!_pendingTasks.ContainsKey(msg.GetGuid()))
-          continue;
-        var stage = _pendingTasks[msg.GetGuid()];
-        _pendingTasks.Remove(msg.GetGuid());
-        stage.TrySetResult(msg);
+        var rawMsg = await SendUtility.ReadFrame(_client.GetStream(), MaxMessageLength);
+        _handler.Receive(new DefaultContext()
+        {
+          client = _client,
+          respond = msg => SendMessage(msg)
+        }, rawMsg.type, rawMsg.buff);
       }
     }
   }
