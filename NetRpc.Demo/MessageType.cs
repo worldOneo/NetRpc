@@ -4,5 +4,6 @@ namespace NetRpc.Demo
   {
     LOGIN,
     LOGIN_RESPONSE,
+    ALIVE,
   }
 }

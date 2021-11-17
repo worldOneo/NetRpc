@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Net;
 using NetRpc.Client;
+using NetRpc.Common;
 using System.Threading;
-
+using System.Threading.Tasks;
 namespace NetRpc.Demo
 {
   class Program
@@ -20,9 +21,18 @@ namespace NetRpc.Demo
 
     async static void test()
     {
-      RpcClient client = new RpcClient(IPAddress.Loopback, 9000);
-      client.RegisterMessageFactory((int)MessageType.LOGIN, () => new Login());
-      client.RegisterMessageFactory((int)MessageType.LOGIN_RESPONSE, () => new LoginResponse());
+      var coordinator = new FulfillingCoordinator();
+      coordinator.Register(
+        (int)MessageType.ALIVE,
+        new ReceiverCallback((ctx, msg) => Console.WriteLine("[Client] Independent alive received"))
+      );
+
+      coordinator.RegisterMessageFactory((int)MessageType.LOGIN, () => new Login());
+      coordinator.RegisterMessageFactory((int)MessageType.LOGIN_RESPONSE, () => new LoginResponse());
+      coordinator.RegisterMessageFactory((int)MessageType.ALIVE, () => new Alive());
+
+
+      var client = new RpcClient<Task<IMessage>>(IPAddress.Loopback, 9000, coordinator, coordinator);
 
       Console.Write("Password: ");
       var argument = new Login()
