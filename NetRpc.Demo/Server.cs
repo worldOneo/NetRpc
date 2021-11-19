@@ -8,13 +8,14 @@ namespace NetRpc.Demo
 {
   public class RemoteServer
   {
-    private RpcServer server;
+    private RpcServer<Task> server;
     public RemoteServer()
     {
       var handler = new MessageCoordinator();
       var login = new MessageHandler<Login>(() => new Login(), LoginUser);
       handler.Register((int)MessageType.LOGIN, login);
-      server = new RpcServer(IPAddress.Loopback, 9000, handler);
+      var cryptor = Encryptor.Create(handler);
+      server = new RpcServer<Task>(IPAddress.Loopback, 9000, cryptor, cryptor);
       server.ErrorHandler = err => Console.WriteLine("[Server] Error: " + err.StackTrace);
       server.Start().Wait();
     }

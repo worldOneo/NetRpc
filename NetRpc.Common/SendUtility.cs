@@ -6,27 +6,6 @@ namespace NetRpc.Common
 {
   public class SendUtility
   {
-
-
-    internal class MessageWriter
-    {
-      private Stream _stream;
-      public MessageWriter(Stream stream)
-      {
-        this._stream = stream;
-      }
-
-      public async Task write(IMessage message)
-      {
-        var data = message.Encode();
-        var size = data.Length;
-        var type = message.Type();
-        await AsyncWriteBuff(_stream, BitConverter.GetBytes(size));
-        await AsyncWriteBuff(_stream, BitConverter.GetBytes(type));
-        await AsyncWriteBuff(_stream, data);
-      }
-    }
-
     internal class MessageReader
     {
       public const int SIZE_FIELD_SIZE = 4;
@@ -76,9 +55,19 @@ namespace NetRpc.Common
       return read;
     }
 
-    public static Task SendMessage(Stream stream, IMessage message)
+    public static async Task SendMessage(Stream stream, IMessage message)
     {
-      return new MessageWriter(stream).write(message);
+      var data = message.Encode();
+      var type = message.Type();
+      await SendFrame(stream, type, data);
+    }
+
+    public static async Task SendFrame(Stream stream, int type, byte[] data)
+    {
+      var size = data.Length;
+      await AsyncWriteBuff(stream, BitConverter.GetBytes(size));
+      await AsyncWriteBuff(stream, BitConverter.GetBytes(type));
+      await AsyncWriteBuff(stream, data);
     }
 
     public static Task<RawMessage> ReadFrame(Stream stream, uint max)

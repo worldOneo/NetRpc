@@ -1,8 +1,7 @@
-using NetRpc.Common;
 using System;
 using System.IO;
 
-namespace NetRpc.Messages
+namespace NetRpc.Common
 {
   public abstract class IdMessage : IMessage
   {

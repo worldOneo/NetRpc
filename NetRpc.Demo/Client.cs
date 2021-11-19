@@ -30,15 +30,14 @@ namespace NetRpc.Demo
       coordinator.RegisterMessageFactory((int)MessageType.LOGIN, () => new Login());
       coordinator.RegisterMessageFactory((int)MessageType.LOGIN_RESPONSE, () => new LoginResponse());
       coordinator.RegisterMessageFactory((int)MessageType.ALIVE, () => new Alive());
-
-
-      var client = new RpcClient<Task<IMessage>>(IPAddress.Loopback, 9000, coordinator, coordinator);
+      var encription = new Encryptor<Task<IMessage>>(coordinator, coordinator);
+      var client = new RpcClient<Task<IMessage>>(IPAddress.Loopback, 9000, encription, encription);
 
       Console.Write("Password: ");
       var argument = new Login()
       {
         Username = "user",
-        Password = Console.ReadLine()
+        Password = "password"
       };
 
       LoginResponse success = (LoginResponse)await client.SendMessage(argument);

@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NetRpc.Common\NetRpc.Common.csproj" />
-    <ProjectReference Include="..\NetRpc.Messages\NetRpc.Messages.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

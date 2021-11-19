@@ -1,5 +1,5 @@
 using System.IO;
-using NetRpc.Messages;
+using NetRpc.Common;
 
 namespace NetRpc.Demo
 {

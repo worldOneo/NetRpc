@@ -1,4 +1,4 @@
-using NetRpc.Messages;
+using NetRpc.Common;
 using System.IO;
 
 namespace NetRpc.Demo
