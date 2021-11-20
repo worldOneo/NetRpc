@@ -16,6 +16,7 @@ namespace NetRpc.Server
 
   public class RpcServer<T> : RpcServer
   {
+    public Action<TcpClient> Disconnect;
     private TcpListener tcpListener;
     private IFrameHandler _handler;
     private ISender<T> _sender;
@@ -60,6 +61,9 @@ namespace NetRpc.Server
         }
         catch (IOException exception)
         {
+          if (Disconnect != null)
+            Disconnect(client);
+
           if (ErrorHandler != null)
             ErrorHandler(exception);
         }

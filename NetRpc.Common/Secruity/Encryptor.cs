@@ -4,26 +4,27 @@ using System.Net.Sockets;
 using System;
 using System.IO;
 
-namespace NetRpc.Common
+namespace NetRpc.Common.Secruity
 {
   public abstract class Encryptor
   {
-    public static Encryptor<Task> Create(IFrameHandler handler)
-      => new Encryptor<Task>(handler, new Sender());
+    public const int KEY_SIZE = 32;
+    public const int IV_SIZE = 16;
+    public static Encryptor<Task> Create(IFrameHandler handler, IKeyStore<TcpClient> keyStore)
+      => new Encryptor<Task>(handler, keyStore, new Sender());
   }
 
   public class Encryptor<T> : Encryptor, ISender<T>, IFrameHandler
   {
     private IFrameHandler _handler;
     private ISender<T> _sender;
-    const int KEY_SIZE = 32;
-    const int IV_SIZE = 16;
-    private byte[] _key = new byte[KEY_SIZE];
+    private IKeyStore<TcpClient> _keyStore;
 
-    public Encryptor(IFrameHandler handler, ISender<T> sender)
+    public Encryptor(IFrameHandler handler, IKeyStore<TcpClient> keyStore, ISender<T> sender)
     {
       _handler = handler;
       _sender = sender;
+      _keyStore = keyStore;
     }
 
     public T Send(TcpClient client, IMessage message)
@@ -38,7 +39,7 @@ namespace NetRpc.Common
         using (var cipher = AesManaged.Create())
         {
           cipher.KeySize = 256;
-          cipher.Key = _key;
+          cipher.Key = _keyStore.Get(client);
           cipher.IV = iv;
           cipher.Mode = CipherMode.CBC;
           cipher.Padding = PaddingMode.Zeros;
@@ -71,7 +72,7 @@ namespace NetRpc.Common
       using (var cipher = AesManaged.Create())
       {
         cipher.KeySize = 256;
-        cipher.Key = _key;
+        cipher.Key = _keyStore.Get(ctx.Client());
         cipher.IV = iv;
         cipher.Mode = CipherMode.CBC;
         cipher.Padding = PaddingMode.Zeros;

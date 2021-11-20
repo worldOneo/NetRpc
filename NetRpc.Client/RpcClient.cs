@@ -23,6 +23,8 @@ namespace NetRpc.Client
       ThreadPool.QueueUserWorkItem(o => Receive());
     }
 
+    public TcpClient Client() => _client;
+
     public T SendMessage(IMessage message)
     {
       return _sender.Send(_client, message);
