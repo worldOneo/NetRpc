@@ -29,7 +29,18 @@ namespace NetRpc.Demo
       var encription = new Encryptor<Task<IMessage>>(coordinator, keyStore, coordinator);
       var keyInterceptor = new KeyExchangeInterceptor<Task<IMessage>>(encription, encription, keyStore, coordinator, pub);
 
-      _client = new RpcClient<Task<IMessage>>(IPAddress.Loopback, 9000, keyInterceptor, keyInterceptor);
+      // Error handling
+      var errorGateHandler = ErrorGate.Create(keyInterceptor,
+        (ctx, ex, type) => Console.WriteLine("[Client] Bad frame of type {0}:\n{1}\n{2} ", type, ex.Message, ex.StackTrace));
+
+      var errorGateSender = ErrorGate.Create<Task<IMessage>>(keyInterceptor, (cl, ex, msg) =>
+      {
+        Console.WriteLine("[Client] Failed to write to {0} message of type {1}:\n{2}\n{3}",
+          cl.Client.RemoteEndPoint, msg.Type(), ex.Message, ex.StackTrace);
+        return Task.Run<IMessage>((Func<IMessage>)(() => null));
+      });
+
+      _client = new RpcClient<Task<IMessage>>(IPAddress.Loopback, 9000, errorGateHandler, errorGateSender);
 
       // Symmetric key exchange over RSA
       var key = new byte[Encryptor.KEY_SIZE];
