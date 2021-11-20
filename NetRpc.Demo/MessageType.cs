@@ -5,5 +5,6 @@ namespace NetRpc.Demo
     LOGIN,
     LOGIN_RESPONSE,
     ALIVE,
+    KEY_EXCHANGE,
   }
 }

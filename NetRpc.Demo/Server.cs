@@ -1,22 +1,30 @@
 using NetRpc.Server;
 using NetRpc.Common;
-using System.Net;
+using NetRpc.Common.Secruity;
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
-
+using System.Security.Cryptography;
 namespace NetRpc.Demo
 {
   public class RemoteServer
   {
     private RpcServer<Task> server;
-    public RemoteServer()
+    public RemoteServer(RSACryptoServiceProvider priv)
     {
       var handler = new MessageCoordinator();
       var login = new MessageHandler<Login>(() => new Login(), LoginUser);
       handler.Register((int)MessageType.LOGIN, login);
-      var cryptor = Encryptor.Create(handler);
-      server = new RpcServer<Task>(IPAddress.Loopback, 9000, cryptor, cryptor);
-      server.ErrorHandler = err => Console.WriteLine("[Server] Error: " + err.StackTrace);
+
+      // Crypto
+      var keyStore = new MapKeyStore<TcpClient>();
+      var cryptor = Encryptor.Create(handler, keyStore);
+      var keyInterceptor = new KeyExchangeInterceptor<Task>(cryptor, cryptor, keyStore, new Sender(), priv);
+
+      server = new RpcServer<Task>(IPAddress.Loopback, 9000, keyInterceptor, keyInterceptor);
+      server.Disconnect = c => keyStore.Remove(c);
+      server.ErrorHandler = err => Console.WriteLine("[Server] Error: {0}\n{1}", err.Message, err.StackTrace);
       server.Start().Wait();
     }
 
