@@ -32,15 +32,17 @@ namespace NetRpc.Demo
 
     public LoginResponse LoginUser(IContext context, Login login)
     {
-      Console.WriteLine("[Server] Loggin attempt: " + login.Username + "@" + login.Password);
-      Task.Run(async () =>
-      {
-        await Task.Delay(1000);
-        context.Respond(new Alive());
-      });
+      Console.WriteLine("[Server] Login attempt: " + login.Username + "@" + login.Password);
+      var loggedIn = login.Username == "user" && login.Password == "password";
+      if (loggedIn)
+        Task.Run(async () =>
+        {
+          await Task.Delay(1000);
+          context.Respond(new Alive());
+        });
       return new LoginResponse()
       {
-        Successful = login.Username == "user" && login.Password == "password"
+        Successful = loggedIn
       };
     }
   }
