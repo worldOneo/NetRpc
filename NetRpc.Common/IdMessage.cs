@@ -16,7 +16,7 @@ namespace NetRpc.Common
       writer.Write(_id.ToByteArray());
       writer.Write(payload);
       writer.Flush();
-      return stream.GetBuffer();
+      return stream.ToArray();
     }
 
     protected void Decode(BinaryReader reader)

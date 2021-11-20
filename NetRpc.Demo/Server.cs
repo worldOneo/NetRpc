@@ -36,7 +36,7 @@ namespace NetRpc.Demo
       Task.Run(async () =>
       {
         await Task.Delay(1000);
-        await SendUtility.SendMessage(context.Client().GetStream(), new Alive());
+        context.Respond(new Alive());
       });
       return new LoginResponse()
       {
